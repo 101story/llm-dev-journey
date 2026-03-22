@@ -24,7 +24,7 @@
 | Phase 1 | LLM 기초 + API 호출 | OpenAI API, 스트리밍, 파라미터 | ✅ 완료 |
 | Phase 2 | LangChain 기초 | PromptTemplate, Memory, Tool, LCEL | ✅ 완료 |
 | Phase 3 | 벡터 데이터베이스 | Embedding, Qdrant, 유사도 검색 | ✅ 완료 |
-| Phase 4 | RAG 시스템 구축 | 문서 로딩, 청킹, RetrievalQA | 🔄 진행중 |
+| Phase 4 | RAG 시스템 구축 | 문서 로딩, 청킹, RetrievalQA | ✅ 완료 |
 | Phase 5 | LangGraph 에이전트 | 그래프 워크플로우, 멀티 에이전트 | ⏳ 예정 |
 | Phase 6 | 실전 통합 프로젝트 | RAG + LangGraph + Qdrant 통합 | ⏳ 예정 |
 
@@ -35,22 +35,28 @@
 ```
 llm-dev-journey/
 │
-├── .env                        # API 키 (git 제외)
+├── .env                          # API 키 (git 제외)
+├── .env.example                  # 환경변수 샘플
 ├── .gitignore
 ├── requirements.txt
+├── sample_doc.txt                # RAG 실습용 샘플 문서
 │
-├── phase1_openai_basic.py      # OpenAI API 기본 호출
-├── phase1_conversation.py      # 대화 히스토리 + 스트리밍
-├── phase1_params.py            # temperature, system prompt 실험
+├── phase1_openai_basic.py        # OpenAI API 기본 호출
+├── phase1_conversation.py        # 대화 히스토리 + 스트리밍
+├── phase1_params.py              # temperature, system prompt 실험
 │
-├── phase2_prompt_template.py   # PromptTemplate + LCEL Chain
-├── phase2_memory.py            # 대화 메모리 관리
-├── phase2_output_parser.py     # 응답 구조화 파싱
-├── phase2_tools.py             # Tool 바인딩 + 에이전트 흐름
+├── phase2_prompt_template.py     # PromptTemplate + LCEL Chain
+├── phase2_memory.py              # 대화 메모리 관리
+├── phase2_output_parser.py       # 응답 구조화 파싱
+├── phase2_tools.py               # Tool 바인딩 + 에이전트 흐름
 │
-├── phase3_embedding.py         # 텍스트 임베딩 + 유사도 계산
-├── phase3_qdrant.py            # Qdrant CRUD + 유사도 검색
-└── phase3_qdrant_langchain.py  # LangChain Retriever 연동
+├── phase3_embedding.py           # 텍스트 임베딩 + 유사도 계산
+├── phase3_qdrant.py              # Qdrant CRUD + 유사도 검색
+├── phase3_qdrant_langchain.py    # LangChain Retriever 연동
+│
+├── phase4_load_and_chunk.py      # 문서 로딩 + 청킹
+├── phase4_rag_pipeline.py        # 전체 RAG 파이프라인
+└── phase4_rag_with_source.py     # RAG + 출처 반환
 ```
 
 ---
@@ -79,6 +85,13 @@ LangChain의 핵심 개념인 LCEL(LangChain Expression Language)을 익히고, 
 
 **핵심 학습**: LLM이 Tool을 호출할 때 content가 비어있고 tool_calls만 반환되며, Tool 결과를 ToolMessage로 다시 전달해야 최종 답변이 생성됩니다.
 
+**트러블슈팅**: LangChain v0.3부터 import 경로가 대거 변경됨.
+- `langchain.prompts` → `langchain_core.prompts`
+- `langchain.output_parsers` → `langchain_core.output_parsers`
+- `langchain_core.pydantic_v1` → `pydantic`
+- `langchain.tools` → `langchain_core.tools`
+- `ConversationChain`, `LLMChain` 등 구버전 클래스 deprecated → LCEL(`|`) 방식이 표준
+
 ### Phase 3 — 벡터 데이터베이스
 텍스트를 벡터로 변환하고 의미 기반 유사도 검색을 구현합니다.
 
@@ -86,10 +99,16 @@ LangChain의 핵심 개념인 LCEL(LangChain Expression Language)을 익히고, 
 - `phase3_qdrant.py` — Qdrant 메모리 모드, 컬렉션 생성·문서 저장·검색
 - `phase3_qdrant_langchain.py` — LangChain VectorStore·Retriever 연동
 
-**핵심 학습**: 벡터 공간에서 의미가 비슷한 텍스트는 가까이 위치하며, 이를 통해 키워드 없이도 관련 문서를 찾을 수 있습니다. Retriever는 Phase 4 RAG의 핵심 부품입니다.
+**핵심 학습**: 벡터 공간에서 의미가 비슷한 텍스트는 가까이 위치하며, 이를 통해 키워드 없이도 관련 문서를 찾을 수 있습니다. `as_retriever(search_kwargs={"k": N})`의 k값은 반환할 문서 수로, 높을수록 더 많은 문맥을 가져오지만 토큰 비용이 증가합니다.
 
-### Phase 4 — RAG 시스템 구축 _(예정)_
-실제 문서(PDF, TXT 등)를 로딩해 벡터DB에 저장하고, 사용자 질문에 관련 문서를 검색해 LLM 답변에 주입하는 전체 파이프라인을 구축합니다.
+### Phase 4 — RAG 시스템 구축
+실제 문서를 로딩해 벡터DB에 저장하고, 사용자 질문에 관련 문서를 검색해 LLM 답변에 주입하는 전체 파이프라인을 구축합니다.
+
+- `phase4_load_and_chunk.py` — 문서 로딩, RecursiveCharacterTextSplitter로 청킹, chunk_overlap 효과 확인
+- `phase4_rag_pipeline.py` — 문서 로딩 → 청킹 → 임베딩 → 저장 → 검색 → 답변 전체 LCEL 파이프라인
+- `phase4_rag_with_source.py` — RunnableParallel로 답변과 참고 문서 출처를 동시에 반환
+
+**핵심 학습**: RAG는 LLM의 환각(hallucination) 문제를 줄이는 핵심 기법입니다. 프롬프트에 "컨텍스트에 없는 내용은 답하지 말라"고 명시하면 문서 기반으로만 답변하게 할 수 있습니다. `chunk_overlap`은 청크 경계에서 문맥이 잘리는 것을 방지합니다.
 
 ### Phase 5 — LangGraph 에이전트 _(예정)_
 그래프 기반 워크플로우로 조건 분기·루프·멀티 에이전트 협력 시스템을 설계합니다.
@@ -128,10 +147,13 @@ python-dotenv
 langchain
 langchain-openai
 langchain-core
+langchain-community
 langchain-qdrant
 qdrant-client
 pydantic
 sentence-transformers
+pypdf
+tiktoken
 ```
 
 ---
@@ -152,9 +174,12 @@ OPENAI_API_KEY=sk-...
 
 - LangChain은 버전업이 매우 빠르기 때문에 import 경로가 자주 바뀜 (`langchain` → `langchain_core`)
 - `ConversationChain`, `LLMChain` 등 구버전 클래스는 deprecated — LCEL(`|`) 방식이 표준
-- Tool 호출 시 LLM의 `content`는 비어있고 `tool_calls`만 반환됨
+- Tool 호출 시 LLM의 `content`는 비어있고 `tool_calls`만 반환됨 — Tool 결과를 `ToolMessage`로 다시 전달해야 최종 답변 생성
 - Qdrant는 도커 없이 메모리 모드(`:memory:`)로 바로 실습 가능
+- RAG에서 `chunk_overlap`은 청크 경계의 문맥 손실을 방지하는 중요한 파라미터
+- Retriever의 `k`값은 검색 품질과 토큰 비용의 트레이드오프
 - 에이전트는 `AgentExecutor` 대신 LangGraph로 구현하는 것이 현재 표준
+- 가상환경(venv)은 프로젝트 폴더 기준으로 생성되므로 폴더 이동 시 새로 생성 필요
 
 ---
 

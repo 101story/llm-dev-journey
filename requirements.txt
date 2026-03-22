@@ -7,3 +7,6 @@ langchain-qdrant
 qdrant-client
 pydantic
 sentence-transformers
+langchain-community 
+pypdf 
+tiktoken

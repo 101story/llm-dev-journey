@@ -25,7 +25,7 @@
 | Phase 2 | LangChain 기초 | PromptTemplate, Memory, Tool, LCEL | ✅ 완료 |
 | Phase 3 | 벡터 데이터베이스 | Embedding, Qdrant, 유사도 검색 | ✅ 완료 |
 | Phase 4 | RAG 시스템 구축 | 문서 로딩, 청킹, RetrievalQA | ✅ 완료 |
-| Phase 5 | LangGraph 에이전트 | 그래프 워크플로우, 멀티 에이전트 | ⏳ 예정 |
+| Phase 5 | LangGraph 에이전트 | 그래프 워크플로우, 멀티 에이전트 | ✅ 완료 |
 | Phase 6 | 실전 통합 프로젝트 | RAG + LangGraph + Qdrant 통합 | ⏳ 예정 |
 
 ---
@@ -56,7 +56,11 @@ llm-dev-journey/
 │
 ├── phase4_load_and_chunk.py      # 문서 로딩 + 청킹
 ├── phase4_rag_pipeline.py        # 전체 RAG 파이프라인
-└── phase4_rag_with_source.py     # RAG + 출처 반환
+├── phase4_rag_with_source.py     # RAG + 출처 반환
+│
+├── phase5_basic_graph.py         # State, Node, Edge 기본 구조
+├── phase5_conditional.py         # 조건 분기 — 질문 유형별 라우팅
+└── phase5_loop.py                # 루프 — 품질 기준 미달 시 재시도
 ```
 
 ---
@@ -110,8 +114,18 @@ LangChain의 핵심 개념인 LCEL(LangChain Expression Language)을 익히고, 
 
 **핵심 학습**: RAG는 LLM의 환각(hallucination) 문제를 줄이는 핵심 기법입니다. 프롬프트에 "컨텍스트에 없는 내용은 답하지 말라"고 명시하면 문서 기반으로만 답변하게 할 수 있습니다. `chunk_overlap`은 청크 경계에서 문맥이 잘리는 것을 방지합니다.
 
-### Phase 5 — LangGraph 에이전트 _(예정)_
+### Phase 5 — LangGraph 에이전트
 그래프 기반 워크플로우로 조건 분기·루프·멀티 에이전트 협력 시스템을 설계합니다.
+
+- `phase5_basic_graph.py` — StateGraph 기본 구조, Node·Edge·START·END 연결
+- `phase5_conditional.py` — `add_conditional_edges`로 질문 유형별 노드 분기
+- `phase5_loop.py` — 품질 평가 후 기준 미달 시 재시도하는 루프 구조
+
+**핵심 학습**: LangChain 체인(`A | B | C`)은 항상 직선으로만 흐르지만,
+LangGraph는 조건 분기·루프·병렬 실행이 가능해 실제 업무처럼 "상황에 따라
+다르게 행동"하는 에이전트를 만들 수 있습니다.
+State는 그래프 전체가 공유하는 데이터 구조이며, 각 Node는 State를 받아
+처리 후 업데이트된 State를 반환합니다.
 
 ### Phase 6 — 실전 통합 프로젝트 _(예정)_
 RAG + LangGraph + Qdrant를 통합한 완전한 AI 에이전트를 구축합니다.
@@ -137,27 +151,6 @@ cp .env.example .env
 # .env 파일에 OPENAI_API_KEY 입력
 ```
 
----
-
-## 📦 requirements.txt
-
-```
-openai
-python-dotenv
-langchain
-langchain-openai
-langchain-core
-langchain-community
-langchain-qdrant
-qdrant-client
-pydantic
-sentence-transformers
-pypdf
-tiktoken
-```
-
----
-
 ## 🔑 환경변수
 
 `.env.example` 파일을 복사해 `.env`로 만들고 키를 입력하세요.
@@ -179,7 +172,10 @@ OPENAI_API_KEY=sk-...
 - RAG에서 `chunk_overlap`은 청크 경계의 문맥 손실을 방지하는 중요한 파라미터
 - Retriever의 `k`값은 검색 품질과 토큰 비용의 트레이드오프
 - 에이전트는 `AgentExecutor` 대신 LangGraph로 구현하는 것이 현재 표준
-- 가상환경(venv)은 프로젝트 폴더 기준으로 생성되므로 폴더 이동 시 새로 생성 필요
+- LangGraph의 3요소: State(공유 데이터), Node(처리 함수), Edge(연결·분기 조건)
+- `add_conditional_edges`의 라우팅 함수 반환값이 곧 다음 노드 이름이 됨
+- 루프는 조건 엣지에서 이전 노드로 되돌아가는 엣지를 추가하는 것으로 구현
+- LangChain 체인과 달리 LangGraph는 `compile()` 후에야 실행 가능한 객체가 됨
 
 ---
 

@@ -10,3 +10,4 @@ sentence-transformers
 langchain-community 
 pypdf 
 tiktoken
+langgraph

@@ -36,10 +36,8 @@
 llm-dev-journey/
 │
 ├── .env                          # API 키 (git 제외)
-├── .env.example                  # 환경변수 샘플
 ├── .gitignore
 ├── requirements.txt
-├── sample_doc.txt                # RAG 실습용 샘플 문서
 │
 ├── phase1_openai_basic.py        # OpenAI API 기본 호출
 ├── phase1_conversation.py        # 대화 히스토리 + 스트리밍
@@ -152,8 +150,6 @@ cp .env.example .env
 ```
 
 ## 🔑 환경변수
-
-`.env.example` 파일을 복사해 `.env`로 만들고 키를 입력하세요.
 
 ```
 OPENAI_API_KEY=sk-...

@@ -27,31 +27,31 @@ LangGraph는 LangChain 기반의 그래프형 에이전트 프레임워크입니
 with open("sample_doc.txt", "w", encoding="utf-8") as f:
     f.write(sample_text)
 
-# # TXT 로딩
-# loader = TextLoader("sample_doc.txt", encoding="utf-8")
-# documents = loader.load()
-# print(f"로딩된 문서 수: {len(documents)}")
-# print(f"전체 텍스트 길이: {len(documents[0].page_content)} 글자")
+# TXT 로딩
+loader = TextLoader("sample_doc.txt", encoding="utf-8")
+documents = loader.load()
+print(f"로딩된 문서 수: {len(documents)}")
+print(f"전체 텍스트 길이: {len(documents[0].page_content)} 글자")
 
-# # --- 청킹 ---
-# # RecursiveCharacterTextSplitter: 단락 → 문장 → 단어 순으로 자연스럽게 분리
-# splitter = RecursiveCharacterTextSplitter(
-#     chunk_size=200,       # 청크 최대 글자 수
-#     chunk_overlap=30,     # 청크 간 겹치는 글자 수 (문맥 유지)
-#     length_function=len,
-# )
+# --- 청킹 ---
+# RecursiveCharacterTextSplitter: 단락 → 문장 → 단어 순으로 자연스럽게 분리
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=200,       # 청크 최대 글자 수
+    chunk_overlap=30,     # 청크 간 겹치는 글자 수 (문맥 유지)
+    length_function=len,
+)
 
-# chunks = splitter.split_documents(documents)
-# print(f"\n청킹 결과: {len(chunks)}개 청크")
-# print(f"chunk_size=200, chunk_overlap=30")
+chunks = splitter.split_documents(documents)
+print(f"\n청킹 결과: {len(chunks)}개 청크")
+print(f"chunk_size=200, chunk_overlap=30")
 
-# print("\n=== 청크 샘플 3개 ===")
-# for i, chunk in enumerate(chunks[:3]):
-#     print(f"\n[청크 {i+1}] ({len(chunk.page_content)}글자)")
-#     print(chunk.page_content)
+print("\n=== 청크 샘플 3개 ===")
+for i, chunk in enumerate(chunks[:3]):
+    print(f"\n[청크 {i+1}] ({len(chunk.page_content)}글자)")
+    print(chunk.page_content)
 
-# # chunk_overlap 효과 확인
-# print("\n=== chunk_overlap 효과 ===")
-# print(f"청크1 끝: ...{chunks[0].page_content[-30:]}")
-# print(f"청크2 시작: {chunks[1].page_content[:30]}...")
-# # 겹치는 부분이 보임 — 문맥이 잘리지 않게 해주는 역할
+# chunk_overlap 효과 확인
+print("\n=== chunk_overlap 효과 ===")
+print(f"청크1 끝: ...{chunks[0].page_content[-30:]}")
+print(f"청크2 시작: {chunks[1].page_content[:30]}...")
+# 겹치는 부분이 보임 — 문맥이 잘리지 않게 해주는 역할
